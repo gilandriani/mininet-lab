@@ -1,0 +1,149 @@
+echo "############ VAMOS LÁ   ******************>"
+echo "#### NAO EXISTE CONECTIVIDADE SEM SER VIA PROXY ________"
+
+swift --info -A http://192.168.56.105:8080/auth/v1.0 -U test:tester -K testing auth
+
+echo "#### NAO EXISTE CONECTIVIDADE SEM SER VIA PROXY ________"
+echo "################################################"
+
+swift -A http://10.0.0.254/auth/v1.0 -U test:tester -K testing auth
+
+
+echo "######### JA PARA O PROXY ---> OK!!!! ###############"
+
+echo "################################################"
+
+
+echo "##############  CRIANDO SEQUENCIA DE ARQUIVOS ALEAÓRIOS /dev/random para TMP  ####################"
+
+testnumber=$RANDOM
+mkdir -p /tmp/h1/teste$testnumber
+
+for i in {1..10}; do 
+	dd if=/dev/urandom of=/tmp/h1/teste$testnumber/file_$RANDOM.bin count=$RANDOM bs=1024 iflag=fullblock
+done
+
+ls /tmp/h1/teste$testnumber
+du -sh /tmp/h1/teste$testnumber/.
+
+echo "##### 10 Arquivos aleatórios criados ########"
+
+echo "#############################################"
+
+echo "#### Montando Object Storage SAIO c/CloudFuse ___H1_____"
+
+echo "#############################################"
+
+echo "#### --- CloudFuse representa Cloud4Org"
+
+echo "#############################################"
+
+/home/labnet/cloudfuse/cloudfuse authurl=http://10.0.0.254/auth/v1.0 username=test:tester password=testing /root/mnt/fsh1
+
+df -h |grep fsh1
+
+echo "#############################################"
+
+echo "#### USANDO RSYNC para copiar (UPLOAD H1 --> R1 --> CLOUD )....."
+
+rsync -dv  /tmp/h1/teste$testnumber/ /root/mnt/fsh1/cLabNet/
+
+echo "#############################################"
+rm -rf /tmp/h1
+umount cloudfuse
+df -h |grep fsh1
+
+echo "###### FIM H1 --- CLOUDFUSE DESMONTADO ###########################"
+
+
+echo "############ INICIO H2 #################################"
+
+
+echo "#####  Testes Conectividade H2... "
+
+
+echo "#### NAO EXISTE CONECTIVIDADE H2 SEM SER VIA PROXY ________"
+
+ssh 10.0.0.2 "swift --info -A http://192.168.56.105:8080/auth/v1.0 -U test:tester -K testing auth"
+
+echo "#### NAO EXISTE CONECTIVIDADE SEM SER VIA PROXY ________"
+echo "################################################"
+
+ssh 10.0.0.2 "swift -A http://10.0.0.254/auth/v1.0 -U test:tester -K testing auth"
+
+echo "######### JA PARA O PROXY H2 ---> OK!!!! ###############"
+
+echo "################################################"
+
+
+
+echo "#### Montando Object Storage SAIO c/CloudFuse ___H2____"
+
+ssh 10.0.0.2 "/home/labnet/cloudfuse/cloudfuse authurl=http://10.0.0.254/auth/v1.0 username=test:tester password=testing /root/mnt/fsh2"
+
+ssh 10.0.0.2 "df -h |grep fsh2"
+
+echo "#############################################"
+
+echo "#### USANDO RSYNC para copiar (DONWLOAD  CLOUD --> R1 --> H2 )....."
+
+ssh 10.0.0.2 "mkdir -p /tmp/h2/teste$testnumber"
+ssh 10.0.0.2 "rsync -dv  /root/mnt/fsh2/cLabNet/ /tmp/h2/teste$testnumber/"
+ssh 10.0.0.2 "ls /tmp/h2/teste$testnumber"
+ssh 10.0.0.2 "du -sh /tmp/h2/teste$testnumber/."
+
+echo "#####  Limpando Cloud......"
+
+ssh 10.0.0.2 "rm /root/mnt/fsh2/cLabNet/*"
+
+echo "#####  Limpando desmontando cloud fuse......"
+
+ssh 10.0.0.2 "umount cloudfuse"
+
+echo "##########  FIM H2  ######################################"
+
+
+echo "##########  INICIO  H3  ##################################"
+
+echo "#####  Testes Conectividade H3 ..."
+
+
+echo "#### NAO EXISTE CONECTIVIDADE H3 SEM SER VIA PROXY ________"
+
+ssh 10.0.0.3 "swift --info -A http://192.168.56.105:8080/auth/v1.0 -U test:tester -K testing auth"
+
+echo "#### NAO EXISTE CONECTIVIDADE SEM SER VIA PROXY ________"
+echo "################################################"
+
+ssh 10.0.0.3 "swift -A http://10.0.0.254/auth/v1.0 -U test:tester -K testing auth"
+
+echo "######### JA PARA O PROXY H3 ---> OK!!!! ###############"
+
+echo "################################################"
+
+
+
+echo "#### Montando Object Storage SAIO c/CloudFuse ___H3____"
+
+ssh 10.0.0.3 "/home/labnet/cloudfuse/cloudfuse authurl=http://10.0.0.254/auth/v1.0 username=test:tester password=testing /root/mnt/fsh3"
+
+ssh 10.0.0.3 "df -h |grep fsh3"
+
+echo "#############################################"
+
+echo "#### USANDO RSYNC para copiar (DONWLOAD  H3 --> R1 --> CLOUD )....."
+
+ssh 10.0.0.3 "mkdir -p /tmp/h3/teste$testnumber"
+ssh 10.0.0.3 "rsync -dv /tmp/h2/teste$testnumber/ /root/mnt/fsh3/cLabNet/"
+ssh 10.0.0.3 "ls /tmp/h3/teste$testnumber"
+ssh 10.0.0.3 "du -sh /tmp/h2/teste$testnumber/."
+
+echo "#############################################"
+
+echo "######  Limpando TMP ......"
+rm -rf /tmp/h2
+echo "#####  Limpando Cloud......"
+ssh 10.0.0.3 "rm /root/mnt/fsh3/cLabNet/*"
+ssh 10.0.0.3 "umount cloudfuse"
+
+echo "##########    FIM    ##########################"

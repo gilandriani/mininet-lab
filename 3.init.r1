@@ -1,0 +1,15 @@
+mkdir /var/run/apache2
+source /etc/apache2/envvars
+apache2
+echo "###### HTTP INICIADO ######"
+netstat -a
+echo "##### TESTA STORAGE DIRETO ######"
+swift -A http://192.168.56.105:8080/auth/v1.0 -U test:tester -K testing auth
+echo "##### TESTA STORAGE VIA PROXY ######"
+swift -A http://127.0.0.1/auth/v1.0 -U test:tester -K testing auth
+
+echo "################################################"
+
+echo "--- EI....... Nao foi gerado nenhum pacote na SDN ainda.... Explique o porque!!!!!"
+
+echo "################################################"

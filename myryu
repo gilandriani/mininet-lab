@@ -1,0 +1,6 @@
+cd /home/labnet/ryu/ryu/app
+cp /home/labnet/SW/my* .
+ 
+ryu-manager --observe-links my_monitor_13_v3.py my_switch_13.py gui_topology/gui_topology.py&
+
+
